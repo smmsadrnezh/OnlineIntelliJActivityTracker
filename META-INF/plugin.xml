@@ -38,6 +38,9 @@
 
   <actions>
     <!-- Add your actions here -->
+    <action id="OnlineTrack.Registration" class="edu.sharif.onlinetrack.RegisterFormAction" text="OnlineTrack Registration" description="Register to OnlineTrack DB and shows some basic settings and information about the plugin.">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>
