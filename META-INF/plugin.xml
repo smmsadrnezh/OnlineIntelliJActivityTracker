@@ -34,6 +34,12 @@
 
   <project-components>
     <!-- Add your project components here -->
+    <component>
+      <implementation-class>edu.sharif.onlinetrack.RunConsoleContent</implementation-class>
+    </component>
+    <component>
+      <implementation-class>edu.sharif.onlinetrack.SendDataScheduler</implementation-class>
+    </component>
   </project-components>
 
   <actions>

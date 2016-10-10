@@ -1,9 +1,7 @@
 package edu.sharif.onlinetrack;
 
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -11,6 +9,8 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.RecentChange;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.ProblemsView;
@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.Key;
 import java.util.List;
+
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.history.core.LocalHistoryFacade;
@@ -92,7 +93,13 @@ public class RegisterFormAction extends AnAction {
 
     void myTestFunctions(AnActionEvent e) throws IOException {
 
-//        printAllLocalChanges(e);
+        notificationTest(e);
+
+//        runConsoleContent(e);
+
+//        printChanges();
+
+//        printRecentChanges();
 
 //        eachRunMetaInformation(e);
 
@@ -104,13 +111,71 @@ public class RegisterFormAction extends AnAction {
 
 //        printCurrentProjectAddress(e);
 
-        printRevisionsInformation();
+//        printRevisionsInformation();
 
     }
 
-    void printAllLocalChanges(AnActionEvent e) {
+    private void notificationTest(AnActionEvent e) {
+        Project project = getEventProject(e);
+        new Notification("error-message", "salam", "khodafez", NotificationType.ERROR).notify(project);
     }
 
+    void runConsoleContent(AnActionEvent e) {
+
+        ProjectManager projectManager = ProjectManager.getInstance();
+        Project[] openProjects = projectManager.getOpenProjects();
+        Project project = openProjects[0];
+        RunContentDescriptor selectedContent = ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
+        if (selectedContent == null) return;
+        ProcessHandler processHandler = selectedContent.getProcessHandler();
+        if (processHandler == null || processHandler.isProcessTerminated()) return;
+        processHandler.addProcessListener(new ProcessAdapter() {
+            public void onTextAvailable(ProcessEvent event, Key outputType) {
+                ProcessHandler processHandler = event.getProcessHandler();
+                if (outputType != ProcessOutputTypes.STDERR) return;
+                String text = event.getText();
+                if (text != null && text.toLowerCase().contains("error")) {
+                    new Notification("error-message", processHandler.toString(), text, NotificationType.ERROR).notify(project);
+                }
+            }
+        });
+
+    }
+
+    void printChanges() {
+        LocalHistoryFacade facade = LocalHistoryImpl.getInstanceImpl().getFacade();
+        RootEntry root = new RootEntry();
+        List<RecentChange> recentChangesList = facade.getRecentChanges(root);
+
+        List<ChangeSet> changeSetList = facade.getChangeListInTests().getChangesInTests();
+        for (int i = 0; i < changeSetList.size(); i++) {
+            System.out.println(changeSetList.get(i).getName());
+            System.out.println(changeSetList.get(i).getAffectedPaths().get(0));
+            System.out.println(changeSetList.get(i).getTimestamp());
+            System.out.println();
+        }
+
+        System.out.println(changeSetList.size());
+
+//        FileHistoryDialogModel myModel = createModel(facade,e);
+//        for (int i = 0; i < myModel.getRevisions().size(); i++) {
+//            System.out.println(myModel.getRevisions().toString());
+//        }
+    }
+
+    void printRecentChanges() {
+        LocalHistoryFacade facade = LocalHistoryImpl.getInstanceImpl().getFacade();
+        RootEntry root = new RootEntry();
+        List<RecentChange> recentChangesList = facade.getRecentChanges(root);
+        for (int i = 0; i < recentChangesList.size(); i++) {
+            System.out.println(recentChangesList.get(i).getChangeName());
+        }
+        System.out.println("====");
+        for (int i = 0; i < recentChangesList.size(); i++) {
+            System.out.println(recentChangesList.get(i).getRevisionBefore());
+        }
+
+    }
 
     void eachRunMetaInformation(AnActionEvent e) {
 
@@ -118,13 +183,9 @@ public class RegisterFormAction extends AnAction {
         RunContentManager a = ExecutionManager.getInstance(project).getContentManager();
         System.out.println(a.getSelectedContent().getExecutionConsole().toString());
 
-//        List<RunContentDescriptor> descriptors = executionManager.getContentManager().showRunContent(env.getExecutor(), descriptor);
-//        System.out.println(executionManager.getContentManager());
-
-
-//        CompilerMessageImpl c = new CompilerMessageImpl(project,CompilerMessageCategory.ERROR, null);
-//        String b = c.toString();
-//        System.out.println(b);
+        CompilerMessageImpl c = new CompilerMessageImpl(project, CompilerMessageCategory.ERROR, null);
+        String b = c.toString();
+        System.out.println(b);
 
     }
 
@@ -150,6 +211,12 @@ public class RegisterFormAction extends AnAction {
         }
     }
 
+    void printCurrentCodeContext(AnActionEvent e) {
+        Project myProject = getEventProject(e);
+        String codeContext = FileEditorManager.getInstance(myProject).getSelectedTextEditor().getDocument().getText();
+        System.out.println(codeContext);
+    }
+
     void printCurrentProjectAddress(AnActionEvent e) {
         // print project which event occures on
         Project myProject = getEventProject(e);
@@ -163,12 +230,7 @@ public class RegisterFormAction extends AnAction {
         }
     }
 
-    void printCurrentCodeContext(AnActionEvent e) {
-        Project myProject = getEventProject(e);
-        String codeContext = FileEditorManager.getInstance(myProject).getSelectedTextEditor().getDocument().getText();
-        System.out.println(codeContext);
-    }
-
+    // Model!
     void printRevisionsInformation() {
         LocalHistoryFacade facade = LocalHistoryImpl.getInstanceImpl().getFacade();
         RootEntry root = new RootEntry();
