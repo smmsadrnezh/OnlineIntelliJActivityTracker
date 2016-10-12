@@ -117,7 +117,7 @@ public class RegisterFormAction extends AnAction {
 
     private void notificationTest(AnActionEvent e) {
         Project project = getEventProject(e);
-        new Notification("error-message", "salam", "khodafez", NotificationType.ERROR).notify(project);
+        new Notification("error-message", "salam", "khodafez", NotificationType.INFORMATION).notify(project);
     }
 
     void runConsoleContent(AnActionEvent e) {
